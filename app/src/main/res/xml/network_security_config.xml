@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Everything is HTTPS except the Blizzard piece host, which only serves plain HTTP;
+     each piece from it is checked against the pinned torrent's SHA-1. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">rogue.blizzard.com.edgesuite.net</domain>
+    </domain-config>
+</network-security-config>
