@@ -110,7 +110,17 @@ gradle :app:testDebugUnitTest
 gradle :app:assembleRelease
 ```
 
-The APK is written to `app/build/outputs/apk/release/app-release.apk`. Release builds are signed with the debug key, so they suit personal use only.
+The APK is written to `app/build/outputs/apk/release/app-release.apk`. Those commands sign it with the debug key, which is for testing only.
+
+To sign with your own release key, run this in a PowerShell window. It asks for the passwords without showing them, then builds and verifies the signature:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\build-release.ps1
+```
+
+The script takes `-Keystore`, `-KeyAlias`, `-Jdk`, `-Sdk` and `-GradleHome` if your paths differ from its defaults. On other systems, set `PD2_KEYSTORE_PATH`, `PD2_KEY_ALIAS`, `PD2_KEYSTORE_PASSWORD` and `PD2_KEY_PASSWORD` before running Gradle.
+
+**Keep the keystore and its passwords backed up.** Updates must be signed with the same key. Android refuses to update an app signed with a different key, so moving from a debug-signed build means uninstalling the old app first. That clears the app's own settings, but not the game folder on the SD card.
 
 ---
 
@@ -220,4 +230,14 @@ gradle :app:testDebugUnitTest
 gradle :app:assembleRelease
 ```
 
-APK nằm tại `app/build/outputs/apk/release/app-release.apk`. Bản release được ký bằng debug key, nên chỉ phù hợp để dùng cá nhân.
+APK nằm tại `app/build/outputs/apk/release/app-release.apk`. Các lệnh trên ký APK bằng debug key, chỉ dùng để thử nghiệm.
+
+Để ký bằng release key của bạn, hãy chạy lệnh sau trong cửa sổ PowerShell. Script sẽ hỏi mật khẩu (không hiện ra màn hình), rồi build và kiểm tra chữ ký:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\build-release.ps1
+```
+
+Nếu đường dẫn của bạn khác mặc định, script nhận các tham số `-Keystore`, `-KeyAlias`, `-Jdk`, `-Sdk` và `-GradleHome`. Trên hệ điều hành khác, hãy đặt `PD2_KEYSTORE_PATH`, `PD2_KEY_ALIAS`, `PD2_KEYSTORE_PASSWORD` và `PD2_KEY_PASSWORD` trước khi chạy Gradle.
+
+**Hãy sao lưu keystore và mật khẩu.** Các bản cập nhật phải được ký bằng cùng một key. Android từ chối cập nhật app đã ký bằng key khác, nên khi chuyển từ bản ký bằng debug key, bạn cần gỡ app cũ trước. Việc này xóa cài đặt của app, nhưng không xóa thư mục game trên thẻ SD.
