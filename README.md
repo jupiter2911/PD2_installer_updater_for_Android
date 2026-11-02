@@ -41,7 +41,7 @@ An Android app that installs and updates [Project Diablo 2](https://www.projectd
 ### Step 2: Install the game
 
 1. Tap **Choose folder…**.
-2. Create a new **empty** folder, such as `Games/Diablo II`, and select it. The app refuses a folder that already has files, so nothing of yours is overwritten.
+2. Create a new **empty** folder, such as `Download/Game/PD2/Diablo II`, and select it. The app refuses a folder that already has files, so nothing of yours is overwritten.
 3. Scroll to **New install** and enter your two CD keys.
 4. Tap **Install**.
 5. **Keep the app open** until it finishes. The screen stays on by itself. Android may stop the download if you switch to another app.
@@ -52,15 +52,29 @@ The keys are used only during the install. The app does not save them; only the 
 
 If the app already shows `✓ ProjectD2` for your folder, skip this step and use **Check** and **Update** instead.
 
-### Step 3: Set up Winlator
+### Step 3: Choose the graphics mode and loot filter
 
-Menu names can differ slightly between Winlator builds.
+In PD2 Updater:
+
+1. Under **Starting the game**, tap **DirectDraw**.
+2. Under **Loot filter**, tap **Choose author** and pick an author.
+3. Tap **Choose filter** and pick a filter. The app saves it as `loot.filter`, and the card shows `✓ In use as loot.filter`.
+4. Optional: turn on **Always update default.filter** to keep PD2's default filter up to date. The game uses that filter when no filter is chosen.
+
+To use your own filters, put them in `ProjectD2/filters/local`. They appear in the author list.
+
+### Step 4: Set up Winlator
+
+These are the settings we usually prefer, but results can differ between phones. Menu names can also differ slightly between Winlator builds.
 
 1. Open Winlator and create a container, or use an existing one.
-2. In the container's settings, under **Drives**, map a drive letter to the folder that holds the game. For example, map `D:` to `/storage/emulated/0/Games`.
-3. Save the container.
+2. In the container's settings, set **Graphics Driver** to **VirGL** and **DX Wrapper** to **WineD3D**.
+3. Under **Drives**, map a drive letter to a folder that contains the game. For example, map `D:` to `/storage/emulated/0/Download`.
+4. Save the container and start it.
+5. In the container's file manager, go to `Game.exe` on the mapped drive. With the example above, it is `D:\Game\PD2\Diablo II\ProjectD2\Game.exe`, which is `Download/Game/PD2/Diablo II/ProjectD2/Game.exe` on the phone.
+6. Long-press `Game.exe` and choose **Create Shortcut**.
 
-### Step 4: Import the keyboard profile (optional)
+### Step 5: Import the keyboard profile (optional)
 
 1. Download [`winlator/D2.icp`](winlator/D2.icp) to your phone.
 2. In Winlator, open **Input Controls** from the side menu.
@@ -81,17 +95,15 @@ What the profile's buttons send:
 
 What each key does depends on your in-game key settings. One round button at the top left has no key assigned; you can edit it in Winlator.
 
-### Step 5: Play
+### Step 6: Play
 
-1. In PD2 Updater, choose a renderer under **Starting the game**.
-2. Tap **Open Winlator to play**.
-3. Start the container and open `ProjectD2\PD2.bat` on the mapped drive, for example `D:\Diablo II\ProjectD2\PD2.bat`.
-4. To start faster next time, create a shortcut to `PD2.bat` in Winlator.
+1. In PD2 Updater, tap **Open Winlator to play**.
+2. On Winlator's **Shortcuts** screen, open the shortcut you created for `Game.exe`.
 
 ### Updating
 
 1. Open PD2 Updater and tap **Check**.
-2. If something is new, tap **Update**.
+2. If something is new, tap **Update**. This also applies a newer copy of the filter you chose.
 
 ### Known limitations
 
@@ -161,7 +173,7 @@ The script takes `-Keystore`, `-KeyAlias`, `-Jdk`, `-Sdk` and `-GradleHome` if y
 ### Bước 2: Cài game
 
 1. Bấm **Chọn thư mục…**.
-2. Tạo một thư mục **trống** mới, ví dụ `Games/Diablo II`, rồi chọn nó. App từ chối thư mục đã có file, nên dữ liệu của bạn không bị ghi đè.
+2. Tạo một thư mục **trống** mới, ví dụ `Download/Game/PD2/Diablo II`, rồi chọn nó. App từ chối thư mục đã có file, nên dữ liệu của bạn không bị ghi đè.
 3. Kéo xuống **Cài đặt mới** và nhập 2 CD key.
 4. Bấm **Cài đặt**.
 5. **Giữ app mở** đến khi xong. Màn hình sẽ tự sáng. Android có thể dừng việc tải nếu bạn chuyển sang app khác.
@@ -172,15 +184,29 @@ Key chỉ được dùng khi cài. App không lưu key; chỉ game giữ key tro
 
 Nếu app đã hiện `✓ ProjectD2` với thư mục của bạn, hãy bỏ qua bước này và dùng **Kiểm tra** rồi **Cập nhật**.
 
-### Bước 3: Thiết lập Winlator
+### Bước 3: Chọn chế độ đồ họa và loot filter
 
-Tên menu có thể hơi khác giữa các bản Winlator.
+Trong PD2 Updater:
+
+1. Ở mục **Khởi động game**, bấm **DirectDraw**.
+2. Ở mục **Bộ lọc đồ (loot filter)**, bấm **Chọn tác giả** rồi chọn một tác giả.
+3. Bấm **Chọn filter** rồi chọn một filter. App lưu filter thành `loot.filter`, và thẻ này hiện `✓ Đang dùng làm loot.filter`.
+4. Không bắt buộc: bật **Luôn cập nhật default.filter** để giữ bộ lọc mặc định của PD2 luôn mới. Game dùng bộ lọc này khi không chọn filter nào.
+
+Muốn dùng filter của riêng bạn, hãy đặt vào `ProjectD2/filters/local`. Các filter đó sẽ xuất hiện trong danh sách tác giả.
+
+### Bước 4: Thiết lập Winlator
+
+Đây là các thiết lập chúng tôi thường ưu tiên, nhưng kết quả có thể khác nhau tùy điện thoại. Tên menu cũng có thể hơi khác giữa các bản Winlator.
 
 1. Mở Winlator, tạo container mới hoặc dùng container có sẵn.
-2. Trong cài đặt container, mục **Drives**, gán một ký tự ổ đĩa cho thư mục chứa game. Ví dụ gán `D:` cho `/storage/emulated/0/Games`.
-3. Lưu container.
+2. Trong cài đặt container, đặt **Graphics Driver** là **VirGL** và **DX Wrapper** là **WineD3D**.
+3. Ở mục **Drives**, gán một ký tự ổ đĩa cho thư mục có chứa game. Ví dụ gán `D:` cho `/storage/emulated/0/Download`.
+4. Lưu container rồi khởi động nó.
+5. Trong trình quản lý file của container, tìm tới `Game.exe` trên ổ đã gán. Với ví dụ trên, đường dẫn là `D:\Game\PD2\Diablo II\ProjectD2\Game.exe`, tức `Download/Game/PD2/Diablo II/ProjectD2/Game.exe` trên điện thoại.
+6. Nhấn giữ `Game.exe` và chọn **Create Shortcut**.
 
-### Bước 4: Nhập cấu hình bàn phím (không bắt buộc)
+### Bước 5: Nhập cấu hình bàn phím (không bắt buộc)
 
 1. Tải [`winlator/D2.icp`](winlator/D2.icp) về điện thoại.
 2. Trong Winlator, mở **Input Controls** ở menu bên.
@@ -201,17 +227,15 @@ Các nút trong cấu hình gửi những phím sau:
 
 Tác dụng của mỗi phím tùy vào cài đặt phím trong game. Một nút tròn ở góc trên bên trái chưa gán phím; bạn có thể sửa trong Winlator.
 
-### Bước 5: Chơi game
+### Bước 6: Chơi game
 
-1. Trong PD2 Updater, chọn renderer ở mục **Khởi động game**.
-2. Bấm **Mở Winlator để chơi**.
-3. Khởi động container và mở `ProjectD2\PD2.bat` trên ổ đã gán, ví dụ `D:\Diablo II\ProjectD2\PD2.bat`.
-4. Để lần sau mở nhanh hơn, tạo shortcut tới `PD2.bat` trong Winlator.
+1. Trong PD2 Updater, bấm **Mở Winlator để chơi**.
+2. Ở màn hình **Shortcuts** của Winlator, mở shortcut bạn đã tạo cho `Game.exe`.
 
 ### Cập nhật
 
 1. Mở PD2 Updater và bấm **Kiểm tra**.
-2. Nếu có bản mới, bấm **Cập nhật**.
+2. Nếu có bản mới, bấm **Cập nhật**. Thao tác này cũng áp dụng bản mới hơn của filter bạn đã chọn.
 
 ### Hạn chế đã biết
 
