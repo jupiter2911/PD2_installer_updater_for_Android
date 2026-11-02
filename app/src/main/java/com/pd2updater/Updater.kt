@@ -10,7 +10,7 @@ import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
 
-class Cancelled : Exception("Đã dừng")
+class Cancelled : Exception(t("Stopped", "Đã dừng"))
 
 /** What one file of the manifest needs. */
 enum class FileState { MATCH, KEPT, UPDATE }
@@ -62,14 +62,14 @@ class Updater(private val projectD2: File, private val cancel: AtomicBoolean) {
     val folder: File get() = projectD2
 
     fun check(progress: Progress, alwaysUpdate: Set<String> = emptySet()): Plan {
-        progress.status("Đang tải manifest…")
+        progress.status(t("Downloading manifest…", "Đang tải manifest…"))
         val raw = retry(progress) { httpText(Pd2Manifest.MANIFEST_URL) }
         val entries = Pd2Manifest.parseLines(checksumLines(raw))
         progress.log("Manifest: ${entries.size} file")
         var i = 0L
         val plan = planFor(entries, projectD2, { file ->
             checkCancel()
-            progress.status("Đang kiểm tra ${file.name}")
+            progress.status(t("Checking ${file.name}", "Đang kiểm tra ${file.name}"))
             progress.bar(++i, entries.size.toLong())
             md5(file)
         }, raw, alwaysUpdate)
@@ -81,27 +81,27 @@ class Updater(private val projectD2: File, private val cancel: AtomicBoolean) {
         val todo = plan.toUpdate
         if (todo.isEmpty()) return
         staging.mkdirs()
-        if (!staging.isDirectory) throw IOException("Không tạo được thư mục ${staging.path}")
+        if (!staging.isDirectory) throw IOException(t("Could not create folder ${staging.path}", "Không tạo được thư mục ${staging.path}"))
         todo.forEachIndexed { index, entry ->
             checkCancel()
             val part = File(staging, entry.name)
             if (part.isFile && md5(part) == entry.md5) {
-                progress.log("Đã có sẵn trong staging: ${entry.name}")
+                progress.log(t("Already in staging: ${entry.name}", "Đã có sẵn trong staging: ${entry.name}"))
             } else {
                 retry(progress) {
-                    progress.status("Tải ${index + 1}/${todo.size}: ${entry.name}")
+                    progress.status(t("Downloading ${index + 1}/${todo.size}: ${entry.name}", "Tải ${index + 1}/${todo.size}: ${entry.name}"))
                     download(entry.url, part, progress)
                     val got = md5(part)
                     if (got != entry.md5) {
                         part.delete()
-                        throw IOException("Sai MD5 ${entry.name}: $got ≠ ${entry.md5}")
+                        throw IOException(t("Wrong MD5 ${entry.name}: $got ≠ ${entry.md5}", "Sai MD5 ${entry.name}: $got ≠ ${entry.md5}"))
                     }
                 }
-                progress.log("Đã tải: ${entry.name}")
+                progress.log(t("Downloaded: ${entry.name}", "Đã tải: ${entry.name}"))
             }
         }
         checkCancel()
-        progress.status("Đang chép file vào ProjectD2…")
+        progress.status(t("Copying files into ProjectD2…", "Đang chép file vào ProjectD2…"))
         for (entry in todo) {
             Files.move(
                 File(staging, entry.name).toPath(),
@@ -127,7 +127,7 @@ class Updater(private val projectD2: File, private val cancel: AtomicBoolean) {
                 throw e
             } catch (e: Exception) {
                 last = e
-                progress.log("Lỗi (lần $attempt): ${e.message}")
+                progress.log(t("Error (attempt $attempt): ${e.message}", "Lỗi (lần $attempt): ${e.message}"))
                 if (attempt < 4) Thread.sleep(1000L * attempt * attempt)
             }
         }
@@ -151,9 +151,9 @@ class Updater(private val projectD2: File, private val cancel: AtomicBoolean) {
         val connection = open(url)
         try {
             val length = connection.contentLengthLong
-            if (length > 1024 * 1024) throw IOException("Manifest quá lớn")
+            if (length > 1024 * 1024) throw IOException(t("Manifest too large", "Manifest quá lớn"))
             val bytes = connection.inputStream.use { it.readBytes() }
-            if (length >= 0 && bytes.size.toLong() != length) throw IOException("Manifest bị cắt")
+            if (length >= 0 && bytes.size.toLong() != length) throw IOException(t("Manifest cut short", "Manifest bị cắt"))
             return String(bytes, Charsets.UTF_8).removePrefix("﻿")
         } finally {
             connection.disconnect()
@@ -178,7 +178,7 @@ class Updater(private val projectD2: File, private val cancel: AtomicBoolean) {
                     }
                 }
             }
-            if (total >= 0 && done != total) throw IOException("Tải thiếu: $done/$total byte")
+            if (total >= 0 && done != total) throw IOException(t("Incomplete download: $done/$total bytes", "Tải thiếu: $done/$total byte"))
         } finally {
             connection.disconnect()
         }

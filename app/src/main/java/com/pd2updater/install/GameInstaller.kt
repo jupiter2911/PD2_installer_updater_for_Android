@@ -1,6 +1,7 @@
 package com.pd2updater.install
 
 import com.pd2updater.Cancelled
+import com.pd2updater.t
 import com.pd2updater.Progress
 import com.pd2updater.Updater
 import java.io.ByteArrayOutputStream
@@ -43,12 +44,12 @@ class GameInstaller(
         checkFolder()
         checkSpace()
         cache.mkdirs()
-        if (!cache.isDirectory) throw InstallFailure("Không tạo được thư mục ${cache.path}")
+        if (!cache.isDirectory) throw InstallFailure(t("Could not create folder ${cache.path}", "Không tạo được thư mục ${cache.path}"))
         for (product in products) install(product)
         val projectD2 = File(game, PROJECT_D2)
         projectD2.mkdirs()
-        if (!projectD2.isDirectory) throw InstallFailure("Không tạo được thư mục ${projectD2.path}")
-        progress.status("Đang cài Project Diablo 2…")
+        if (!projectD2.isDirectory) throw InstallFailure(t("Could not create folder ${projectD2.path}", "Không tạo được thư mục ${projectD2.path}"))
+        progress.status(t("Installing Project Diablo 2…", "Đang cài Project Diablo 2…"))
         (pd2 ?: ::installPd2)(projectD2)
     }
 
@@ -63,10 +64,10 @@ class GameInstaller(
 
     /** Only an empty folder or one this installer began: nothing of the player's is touched. */
     private fun checkFolder() {
-        if (game.exists() && !game.isDirectory) throw InstallFailure("${game.path} không phải thư mục.")
+        if (game.exists() && !game.isDirectory) throw InstallFailure(t("${game.path} is not a folder.", "${game.path} không phải thư mục."))
         if (cache.isDirectory) return
         if (!game.list().isNullOrEmpty()) {
-            throw InstallFailure("Thư mục đã có file. Hãy chọn một thư mục trống để cài đặt.")
+            throw InstallFailure(t("The folder already has files. Choose an empty folder to install into.", "Thư mục đã có file. Hãy chọn một thư mục trống để cài đặt."))
         }
     }
 
@@ -76,18 +77,18 @@ class GameInstaller(
         val present = game.walkTopDown().filter { it.isFile }.sumOf { it.length() }
         val needed = requiredBytes - present
         if (needed > 0 && game.usableSpace < needed) {
-            throw InstallFailure("Không đủ dung lượng: cần thêm khoảng ${gigabytes(needed)} GB trống.")
+            throw InstallFailure(t("Not enough space: about ${gigabytes(needed)} GB more is needed.", "Không đủ dung lượng: cần thêm khoảng ${gigabytes(needed)} GB trống."))
         }
     }
 
     private fun install(product: Product) {
         val done = File(cache, "${product.id}.done")
         if (done.isFile) {
-            progress.log("${title(product)}: đã cài xong trước đó.")
+            progress.log(t("${title(product)}: already installed.", "${title(product)}: đã cài xong trước đó."))
             return
         }
         val folder = downloaded(product)
-        progress.status("Đang cài ${title(product)}…")
+        progress.status(t("Installing ${title(product)}…", "Đang cài ${title(product)}…"))
         val tomeFile = File(folder, Products.TOME)
         Mpq.open(tomeFile).use { tome ->
             val script = String(tome.member(Products.SCRIPT_MEMBER), Charsets.UTF_8).removePrefix("﻿")
@@ -96,7 +97,7 @@ class GameInstaller(
             NativeInstall.run(tome, plan, game, keyFor(product), cancel) { copied, total -> progress.bar(copied, total) }
         }
         done.writeText("done")
-        progress.log("${title(product)}: đã cài xong.")
+        progress.log(t("${title(product)}: installed.", "${title(product)}: đã cài xong."))
     }
 
     /** The product's checked files, downloaded unless a finished copy still matches. */
@@ -104,8 +105,8 @@ class GameInstaller(
         val finished = File(cache, product.pin.name)
         if (finished.isDirectory) {
             if (product.kept.all { matches(File(finished, it.path), it) }) return finished
-            progress.log("${title(product)}: file đã tải bị hỏng, tải lại.")
-            if (!finished.deleteRecursively()) throw InstallFailure("Không xóa được ${finished.path}")
+            progress.log(t("${title(product)}: downloaded files are damaged, downloading again.", "${title(product)}: file đã tải bị hỏng, tải lại."))
+            if (!finished.deleteRecursively()) throw InstallFailure(t("Could not delete ${finished.path}", "Không xóa được ${finished.path}"))
         }
         val partial = File(cache, "${product.pin.name}.partial")
         fetch(product, partial)
@@ -113,29 +114,29 @@ class GameInstaller(
             val target = File(partial, file.path)
             if (!matches(target, file)) {
                 target.delete()
-                throw InstallFailure("File tải về không đúng: ${file.path}. Bấm Cài đặt để tải lại file này.")
+                throw InstallFailure(t("A downloaded file is wrong: ${file.path}. Tap Install to download it again.", "File tải về không đúng: ${file.path}. Bấm Cài đặt để tải lại file này."))
             }
         }
-        if (!partial.renameTo(finished)) throw InstallFailure("Không đổi tên được ${partial.path}")
+        if (!partial.renameTo(finished)) throw InstallFailure(t("Could not rename ${partial.path}", "Không đổi tên được ${partial.path}"))
         return finished
     }
 
     private fun fetch(product: Product, partial: File) {
         val pin = product.pin
-        progress.status("Đang lấy thông tin tải ${title(product)}…")
+        progress.status(t("Getting download information for ${title(product)}…", "Đang lấy thông tin tải ${title(product)}…"))
         val wrapper = wrapper(product)
         val torrent = try {
             Torrent.fromStub(wrapper)
         } catch (error: TorrentException) {
-            throw InstallFailure("Không đọc được thông tin tải của ${title(product)}.")
+            throw InstallFailure(t("Could not read the download information for ${title(product)}.", "Không đọc được thông tin tải của ${title(product)}."))
         }
         val cookie = AccessCookie.find(wrapper)
-            ?: throw InstallFailure("Không có quyền tải trong thông tin của ${title(product)}.")
+            ?: throw InstallFailure(t("The information for ${title(product)} holds no download permission.", "Không có quyền tải trong thông tin của ${title(product)}."))
         if (cookie.expires <= now() / 1000 + COOKIE_MARGIN_SECONDS) {
-            throw InstallFailure("Quyền tải của ${title(product)} sắp hết hạn. Hãy thử lại sau.")
+            throw InstallFailure(t("The download permission for ${title(product)} is about to expire. Try again later.", "Quyền tải của ${title(product)} sắp hết hạn. Hãy thử lại sau."))
         }
         Products.pinMismatch(torrent, pin, product.kept)?.let {
-            throw InstallFailure("Bộ cài ${title(product)} khác với bản đã kiểm chứng ($it), không tải.")
+            throw InstallFailure(t("The ${title(product)} installer differs from the verified one ($it), not downloading.", "Bộ cài ${title(product)} khác với bản đã kiểm chứng ($it), không tải."))
         }
         val kept = product.kept.map { it.path }.toSet()
         val files = ArrayList<PayloadFile?>()
@@ -148,7 +149,7 @@ class GameInstaller(
                     files.add(null)
                 }
             }
-            progress.status("Đang tải ${title(product)}…")
+            progress.status(t("Downloading ${title(product)}…", "Đang tải ${title(product)}…"))
             val outcome = PieceFetcher(fetchLimits, cancel = cancel)
                 .fetch(Download(torrent, cookie, pin.base, files)) { done, total -> progress.bar(done, total) }
             if (outcome == FetchOutcome.COMPLETE) files.forEach { it?.sync() }
@@ -159,11 +160,11 @@ class GameInstaller(
         when (outcome) {
             FetchOutcome.COMPLETE -> {}
             FetchOutcome.REFUSED, FetchOutcome.EXPIRED ->
-                throw InstallFailure("Máy chủ từ chối tải ${title(product)}. Bấm Cài đặt để thử lại, phần đã tải được giữ nguyên.")
+                throw InstallFailure(t("The server refused ${title(product)}. Tap Install to try again; what was downloaded is kept.", "Máy chủ từ chối tải ${title(product)}. Bấm Cài đặt để thử lại, phần đã tải được giữ nguyên."))
             FetchOutcome.INCOMPLETE ->
-                throw InstallFailure("Mạng không ổn định, ${title(product)} chưa tải hết. Bấm Cài đặt để tải tiếp.")
+                throw InstallFailure(t("Unstable network, ${title(product)} is not fully downloaded. Tap Install to continue.", "Mạng không ổn định, ${title(product)} chưa tải hết. Bấm Cài đặt để tải tiếp."))
             FetchOutcome.STORE_FAILED ->
-                throw InstallFailure("Không ghi được file vào bộ nhớ khi tải ${title(product)}.")
+                throw InstallFailure(t("Could not write to storage while downloading ${title(product)}.", "Không ghi được file vào bộ nhớ khi tải ${title(product)}."))
         }
     }
 
@@ -181,7 +182,7 @@ class GameInstaller(
                 last = error
             }
         }
-        throw InstallFailure("Không tải được thông tin của ${title(product)}: ${last?.message}")
+        throw InstallFailure(t("Could not download the information for ${title(product)}: ${last?.message}", "Không tải được thông tin của ${title(product)}: ${last?.message}"))
     }
 
     private fun pause(millis: Long) {
@@ -201,7 +202,7 @@ class GameInstaller(
             connection.connectTimeout = 15_000
             connection.readTimeout = 30_000
             val status = connection.responseCode
-            if (status in 300..399) throw InstallFailure("Địa chỉ tải ${title(product)} đã bị chuyển hướng, không tải.")
+            if (status in 300..399) throw InstallFailure(t("The download address of ${title(product)} was redirected, not downloading.", "Địa chỉ tải ${title(product)} đã bị chuyển hướng, không tải."))
             if (status != 200) throw IOException("HTTP $status")
             val out = ByteArrayOutputStream()
             connection.inputStream.use { input ->
@@ -210,14 +211,14 @@ class GameInstaller(
                     val count = input.read(buffer)
                     if (count < 0) break
                     out.write(buffer, 0, count)
-                    if (out.size() > wrapperSizes.last) throw InstallFailure("Thông tin tải của ${title(product)} quá lớn.")
+                    if (out.size() > wrapperSizes.last) throw InstallFailure(t("The download information for ${title(product)} is too large.", "Thông tin tải của ${title(product)} quá lớn."))
                 }
             }
             val bytes = out.toByteArray()
             // getLegacy's rate limit is an empty or nearly empty 200: ask again after a pause.
-            if (bytes.size < minOf(wrapperSizes.first, RATE_LIMITED_WRAPPER_BYTES)) throw IOException("máy chủ đang giới hạn tải, hãy thử lại sau ít phút")
+            if (bytes.size < minOf(wrapperSizes.first, RATE_LIMITED_WRAPPER_BYTES)) throw IOException(t("the server is rate limiting, try again in a few minutes", "máy chủ đang giới hạn tải, hãy thử lại sau ít phút"))
             if (bytes.size < wrapperSizes.first || bytes.size < 2 || bytes[0] != 'M'.code.toByte() || bytes[1] != 'Z'.code.toByte()) {
-                throw InstallFailure("Thông tin tải của ${title(product)} không đúng định dạng.")
+                throw InstallFailure(t("The download information for ${title(product)} has the wrong format.", "Thông tin tải của ${title(product)} không đúng định dạng."))
             }
             return bytes
         } finally {
@@ -227,7 +228,7 @@ class GameInstaller(
 
     private fun matches(file: File, expected: KeptFile): Boolean {
         if (!file.isFile || file.length() != expected.size) return false
-        progress.status("Đang kiểm tra ${file.name}…")
+        progress.status(t("Checking ${file.name}…", "Đang kiểm tra ${file.name}…"))
         val digest = MessageDigest.getInstance("SHA-256")
         val buffer = ByteArray(1 shl 20)
         var read = 0L
@@ -248,12 +249,12 @@ class GameInstaller(
         val updater = Updater(projectD2, cancel)
         updater.apply(updater.check(progress), progress)
         if (updater.check(progress).toUpdate.isNotEmpty()) {
-            throw InstallFailure("Còn file PD2 chưa khớp. Bấm Cài đặt để thử lại.")
+            throw InstallFailure(t("Some PD2 files still differ. Tap Install to try again.", "Còn file PD2 chưa khớp. Bấm Cài đặt để thử lại."))
         }
         val missing = PD2_LAUNCH_FILES.filterNot { File(projectD2, it).isFile }
         if (missing.isNotEmpty()) {
             throw InstallFailure(
-                "Manifest PD2 thiếu ${missing.joinToString()}. Hãy chạy ProjectD2Installer.exe một lần trong Winlator.",
+                t("The PD2 manifest lacks ${missing.joinToString()}. Run ProjectD2Installer.exe once in Winlator.", "Manifest PD2 thiếu ${missing.joinToString()}. Hãy chạy ProjectD2Installer.exe một lần trong Winlator."),
             )
         }
     }
@@ -277,12 +278,12 @@ class GameInstaller(
         /** Why a key is refused, for the player. */
         fun describe(field: KeyField, problem: KeyProblem): String {
             val why = when (problem) {
-                KeyProblem.WRONG_LENGTH -> "key phải có 26 ký tự"
-                KeyProblem.OLD_KEY_LENGTH -> "đây là key 16 ký tự kiểu cũ, bộ cài này cần key 26 ký tự"
-                KeyProblem.INVALID_CHARACTER -> "có ký tự không hợp lệ"
-                KeyProblem.EXPANSION_KEY_IN_BASE_FIELD -> "đây là key của Lord of Destruction"
-                KeyProblem.BASE_KEY_IN_EXPANSION_FIELD -> "đây là key của Diablo II"
-                KeyProblem.WRONG_PRODUCT -> "key không thuộc sản phẩm này"
+                KeyProblem.WRONG_LENGTH -> t("the key must have 26 characters", "key phải có 26 ký tự")
+                KeyProblem.OLD_KEY_LENGTH -> t("this is an old 16-character key, this installer needs a 26-character key", "đây là key 16 ký tự kiểu cũ, bộ cài này cần key 26 ký tự")
+                KeyProblem.INVALID_CHARACTER -> t("it has an invalid character", "có ký tự không hợp lệ")
+                KeyProblem.EXPANSION_KEY_IN_BASE_FIELD -> t("this is a Lord of Destruction key", "đây là key của Lord of Destruction")
+                KeyProblem.BASE_KEY_IN_EXPANSION_FIELD -> t("this is a Diablo II key", "đây là key của Diablo II")
+                KeyProblem.WRONG_PRODUCT -> t("the key is not for this product", "key không thuộc sản phẩm này")
             }
             return "CD key ${fieldTitle(field)}: $why."
         }
@@ -292,7 +293,7 @@ class GameInstaller(
         /** Remove the downloaded installers; the installed game stays. */
         fun deleteDownloads(game: File) {
             val cache = File(game, CACHE_FOLDER)
-            if (cache.exists() && !cache.deleteRecursively()) throw IOException("Không xóa được ${cache.path}")
+            if (cache.exists() && !cache.deleteRecursively()) throw IOException(t("Could not delete ${cache.path}", "Không xóa được ${cache.path}"))
         }
     }
 }

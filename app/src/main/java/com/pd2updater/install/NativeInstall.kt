@@ -1,6 +1,7 @@
 package com.pd2updater.install
 
 import com.pd2updater.Cancelled
+import com.pd2updater.t
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -19,36 +20,36 @@ object NativeInstall {
     private const val WRITE_BUFFER = 1 shl 20
 
     fun checkPlan(plan: List<Operation>, expected: ExpectedPlan) {
-        fun shape(what: String) = InstallFailure("Kịch bản cài không như dự kiến: $what")
+        fun shape(what: String) = InstallFailure(t("The install script is not as expected: $what", "Kịch bản cài không như dự kiến: $what"))
         if (plan.count { it is Operation.Extract } != expected.extracts ||
             plan.count { it is Operation.Add } != expected.adds ||
             plan.count { it is Operation.Delete } != expected.deletes
         ) {
-            throw shape("số thao tác")
+            throw shape(t("operation count", "số thao tác"))
         }
         var keys = 0
         var owners = 0
         for (operation in plan) {
             when (operation) {
-                is Operation.Add -> if (operation.container != expected.container) throw shape("archive khác")
+                is Operation.Add -> if (operation.container != expected.container) throw shape(t("another archive", "archive khác"))
                 is Operation.Key -> {
                     if (operation.container != expected.container || operation.into != expected.keyMember ||
                         operation.product != expected.product
                     ) {
-                        throw shape("mục CD key")
+                        throw shape(t("CD key entry", "mục CD key"))
                     }
                     keys++
                 }
                 is Operation.Owner -> {
                     if (operation.container != expected.container || operation.into != Keystore.OWNER_MEMBER) {
-                        throw shape("mục chủ sở hữu")
+                        throw shape(t("owner entry", "mục chủ sở hữu"))
                     }
                     owners++
                 }
                 else -> {}
             }
         }
-        if (keys != 1 || owners != 1) throw shape("cần đúng một key và một chủ sở hữu")
+        if (keys != 1 || owners != 1) throw shape(t("needs exactly one key and one owner", "cần đúng một key và một chủ sở hữu"))
     }
 
     /**
@@ -69,7 +70,7 @@ object NativeInstall {
                 is Operation.Extract -> {
                     val length = tome.size(operation.from)
                     if (operation.size != null && operation.size != length) {
-                        throw InstallFailure("File trong bộ cài sai kích thước: ${operation.to}")
+                        throw InstallFailure(t("A file in the installer has the wrong size: ${operation.to}", "File trong bộ cài sai kích thước: ${operation.to}"))
                     }
                     total += length
                 }
@@ -118,7 +119,7 @@ object NativeInstall {
                 is Operation.Add -> {
                     val data = tome.member(operation.from)
                     if (operation.size != null && operation.size != data.size.toLong()) {
-                        throw InstallFailure("Mục trong bộ cài sai kích thước: ${operation.to}")
+                        throw InstallFailure(t("An entry in the installer has the wrong size: ${operation.to}", "Mục trong bộ cài sai kích thước: ${operation.to}"))
                     }
                     container = operation.container
                     members.add(NewMember(operation.to, data))
@@ -134,10 +135,10 @@ object NativeInstall {
                 else -> {}
             }
         }
-        return (container ?: throw InstallFailure("Kịch bản cài không có archive")) to members
+        return (container ?: throw InstallFailure(t("The install script has no archive", "Kịch bản cài không có archive"))) to members
     }
 
     private fun removeIfPresent(file: File) {
-        if (file.exists() && !file.delete()) throw IOException("Không xóa được ${file.name}")
+        if (file.exists() && !file.delete()) throw IOException(t("Could not delete ${file.name}", "Không xóa được ${file.name}"))
     }
 }

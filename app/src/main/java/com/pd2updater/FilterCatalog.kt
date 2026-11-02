@@ -90,7 +90,7 @@ object FilterCatalog {
     /** The contents of a GitHub blob API answer: `{"content": "<base64 with newlines>", "encoding": "base64"}`. */
     fun decodeBlob(json: String): ByteArray {
         val o = JSONObject(json)
-        if (o.optString("encoding") != "base64") throw IOException("GitHub blob không phải base64")
+        if (o.optString("encoding") != "base64") throw IOException(t("GitHub blob is not base64", "GitHub blob không phải base64"))
         return java.util.Base64.getMimeDecoder().decode(o.getString("content"))
     }
 
@@ -105,7 +105,7 @@ object FilterCatalog {
     fun localFilters(projectD2: File): List<Filter> =
         File(projectD2, "filters/local").listFiles { f -> f.isFile && f.name.endsWith(".filter", true) }
             ?.sortedBy { it.name.lowercase() }
-            ?.map { Filter(it.name, "", gitBlobSha(it.readBytes()), it.name, "Filter của bạn trong filters/local", "") }
+            ?.map { Filter(it.name, "", gitBlobSha(it.readBytes()), it.name, t("Your filter in filters/local", "Filter của bạn trong filters/local"), "") }
             ?: emptyList()
 }
 
@@ -144,11 +144,11 @@ class FilterService(private val projectD2: File) {
             val bytes = download(filter)
             File(online, filter.name).apply { writeBytes(bytes) }
         }
-        if (!source.isFile) throw IOException("Không thấy ${source.path}")
+        if (!source.isFile) throw IOException(t("Not found: ${source.path}", "Không thấy ${source.path}"))
         val temp = File(projectD2, "${FilterCatalog.LOOT_FILTER}.pd2-updater")
         source.copyTo(temp, overwrite = true)
-        if (loot.exists() && !loot.delete()) throw IOException("Không thay được loot.filter")
-        if (!temp.renameTo(loot)) throw IOException("Không thay được loot.filter")
+        if (loot.exists() && !loot.delete()) throw IOException(t("Could not replace loot.filter", "Không thay được loot.filter"))
+        if (!temp.renameTo(loot)) throw IOException(t("Could not replace loot.filter", "Không thay được loot.filter"))
     }
 
     /**
@@ -159,10 +159,10 @@ class FilterService(private val projectD2: File) {
     private fun download(filter: FilterCatalog.Filter): ByteArray {
         val raw = getBytes(filter.downloadUrl)
         if (filter.sha.isEmpty() || FilterCatalog.gitBlobSha(raw) == filter.sha) return raw
-        if (filter.gitUrl.isEmpty()) throw IOException("Filter tải về không khớp SHA của GitHub (không có git_url)")
+        if (filter.gitUrl.isEmpty()) throw IOException(t("The downloaded filter does not match GitHub's SHA (no git_url)", "Filter tải về không khớp SHA của GitHub (không có git_url)"))
         val blob = FilterCatalog.decodeBlob(get(filter.gitUrl))
         val got = FilterCatalog.gitBlobSha(blob)
-        if (got != filter.sha) throw IOException("Filter không khớp SHA của GitHub: ${got.take(10)} ≠ ${filter.sha.take(10)}")
+        if (got != filter.sha) throw IOException(t("The filter does not match GitHub's SHA: ${got.take(10)} ≠ ${filter.sha.take(10)}", "Filter không khớp SHA của GitHub: ${got.take(10)} ≠ ${filter.sha.take(10)}"))
         return blob
     }
 
@@ -178,10 +178,10 @@ class FilterService(private val projectD2: File) {
         }
         try {
             val code = connection.responseCode
-            if (code == 403 || code == 429) throw IOException("GitHub tạm giới hạn lượt truy cập, thử lại sau ít phút")
+            if (code == 403 || code == 429) throw IOException(t("GitHub is rate limiting, try again in a few minutes", "GitHub tạm giới hạn lượt truy cập, thử lại sau ít phút"))
             if (code != 200) throw IOException("HTTP $code: $url")
             val bytes = connection.inputStream.use { it.readBytes() }
-            if (bytes.size > 16 * 1024 * 1024) throw IOException("File quá lớn: $url")
+            if (bytes.size > 16 * 1024 * 1024) throw IOException(t("File too large: $url", "File quá lớn: $url"))
             return bytes
         } finally {
             connection.disconnect()
